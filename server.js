@@ -13,7 +13,7 @@ app.set("views", __dirname + "/views");
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: ["https://crypto-miner-staging.netlify.app/"], // Add your frontend URL
+    origin: "*", // Add your frontend URL
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
