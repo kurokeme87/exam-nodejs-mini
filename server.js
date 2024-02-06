@@ -59,7 +59,7 @@ app.post("/admin/approve/:userId", (req, res) => {
       }
 
       // Redirect back to the admin dashboard
-      res.redirect("/admin/dashboard");
+      res.redirect("/");
     }
   );
 });
