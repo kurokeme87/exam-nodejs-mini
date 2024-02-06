@@ -13,7 +13,7 @@ app.set("views", __dirname + "/views");
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: ["http://localhost:3010"], // Add your frontend URL
+    origin: ["https://cryptominer.onrender.com"], // Add your frontend URL
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
