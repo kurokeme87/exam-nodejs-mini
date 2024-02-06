@@ -31,7 +31,7 @@ const db = new sqlite3.Database("your-database-file.db", (err) => {
     );
   }
 });
-app.get("/admin/dashboard", (req, res) => {
+app.get("/", (req, res) => {
   // Fetch the list of users from the database
   db.all("SELECT * FROM users", (err, users) => {
     if (err) {
