@@ -8,7 +8,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 // Set EJS as the view engine
 app.set("view engine", "ejs");
-app.set("views", __dirname + "/views");
+app.set("views", `${__dirname}/views`);
+
+
 
 app.use(bodyParser.json());
 app.use(
@@ -19,18 +21,21 @@ app.use(
   })
 );
 
+
 // Use a persistent SQLite database instead of in-memory
-const db = new sqlite3.Database("your-database-file.db", (err) => {
+const db = new sqlite3.Database("crypto-miner.db", (err) => {
   if (err) {
     console.error("Error opening database:", err.message);
   } else {
     console.log("Connected to the SQLite database.");
     // Create the users table if it does not exist
     db.run(
-      "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, password TEXT, approved BOOLEAN DEFAULT 0)"
+      "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, password TEXT, approved BOOLEAN DEFAULT 0, allow_withdraw BOOLEAN NOT NULL DEFAULT 0 )"
     );
   }
 });
+
+
 app.get("/", (req, res) => {
   // Fetch the list of users from the database
   db.all("SELECT * FROM users", (err, users) => {
@@ -43,17 +48,18 @@ app.get("/", (req, res) => {
   });
 });
 
-app.post("/admin/approve/:userId", (req, res) => {
-  const userId = req.params.userId;
 
-  // Update the user's 'approved' status in the database
+app.post("/admin/revoke/withdrawal/:userId", (req, res) => {
+  const userId = req.params.userId;
+  console.log(userId);
+
+  // Update the user's 'withdrawal' status in the database
   db.run(
-    "UPDATE users SET approved = 1 WHERE id = ?",
+    "UPDATE users SET allow_withdraw = 0 WHERE id = ?",
     [userId],
-    function (err) {
-      console.log(err);
+    (err) => {
       if (err) {
-        console.log(err);
+        console.log("[DB - ERROR]: ", err);
 
         return res.status(500).json({ error: "Internal server error" });
       }
@@ -63,6 +69,72 @@ app.post("/admin/approve/:userId", (req, res) => {
     }
   );
 });
+
+
+app.post("/admin/approve/withdrawal/:userId", (req, res) => {
+  const userId = req.params.userId;
+  console.log(userId);
+
+  // Update the user's 'withdrawal' status in the database
+  db.run(
+    "UPDATE users SET allow_withdraw = 1 WHERE id = ?",
+    [userId],
+    (err) => {
+      if (err) {
+        console.log("[DB - ERROR]: ", err);
+
+        return res.status(500).json({ error: "Internal server error" });
+      }
+
+      // Redirect back to the admin dashboard
+      res.redirect("/");
+    }
+  );
+});
+
+
+app.post("/admin/approve/:userId", (req, res) => {
+  const userId = req.params.userId;
+
+  // Update the user's 'approved' status in the database
+  db.run(
+    "UPDATE users SET approved = 1 WHERE id = ?",
+    [userId],
+    (err) => {
+      if (err) {
+        console.log("[DB - ERROR]: ", err);
+
+        return res.status(500).json({ error: "Internal server error" });
+      }
+
+      // Redirect back to the admin dashboard
+      res.redirect("/");
+    }
+  );
+});
+
+
+
+app.post("/api/withdrawal/approval/:userEmail", (req, res) => {
+  const userEmail = req.params.userEmail;
+
+  // Check if user has VIP/Priviledged withdrawal enabled
+  db.get("SELECT * FROM users WHERE email = ?", [userEmail], (err, row) => {
+    if (err) {
+      console.log("[DB - ERROR]: ", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    const status = row.allow_withdraw ? true : false;
+    res.status(200).json({
+      withdrawal_status: status,
+      msg: status ? 'Withdrawal Approved' : "User Not VIP Approved",
+    });
+  })
+});
+
+
+
 app.post("/api/auth", (req, res) => {
   const { email, password } = req.body;
 
@@ -119,6 +191,7 @@ app.post("/api/auth", (req, res) => {
     }
   });
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
