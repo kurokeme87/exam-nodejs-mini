@@ -9,13 +9,13 @@ const assert = require('assert');
 // ===================== RENDER PATH SETUP STARTS HERE ======================
 
 // .trim() is important.
-const ENV_VALUE = process.env['PROD']?.trim();
+const ENV_VALUE = process.env.PROD?.trim();
 assert(ENV_VALUE === 'false' || ENV_VALUE === 'true', "Error . . . 'PROD' environment variable not properly set!.");
 const IS_ON_PROD = ENV_VALUE === 'false' ? false : true;
 
 // Setup "Render" persisted disk directory path and path_to_sqlite_db.
 const PERSISTENT_DISK_ROOT = "/var/lib/data/";
-const PATH_TO_SQLITE_DB = IS_ON_PROD ? PERSISTENT_DISK_ROOT + "prod-crypto-miner.db" : "crypto-miner.db";
+const PATH_TO_SQLITE_DB = IS_ON_PROD ? `${PERSISTENT_DISK_ROOT}prod-crypto-miner.db` : "crypto-miner.db";
 // console.log(PATH_TO_SQLITE_DB);
 
 // ===================== RENDER PATH SETUP ENDS HERE ======================
