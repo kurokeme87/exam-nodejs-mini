@@ -3,9 +3,27 @@ const express = require("express");
 const sqlite3 = require("sqlite3");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const assert = require('assert');
+
+
+// ===================== RENDER PATH SETUP STARTS HERE ======================
+
+// .trim() is important.
+const ENV_VALUE = process.env['PROD']?.trim();
+assert(ENV_VALUE === 'false' || ENV_VALUE === 'true', "Error . . . 'PROD' environment variable not properly set!.");
+const IS_ON_PROD = ENV_VALUE === 'false' ? false : true;
+
+// Setup "Render" persisted disk directory path and path_to_sqlite_db.
+const PERSISTENT_DISK_ROOT = "/var/lib/data/";
+const PATH_TO_SQLITE_DB = IS_ON_PROD ? PERSISTENT_DISK_ROOT + "prod-crypto-miner.db" : "crypto-miner.db";
+// console.log(PATH_TO_SQLITE_DB);
+
+// ===================== RENDER PATH SETUP ENDS HERE ======================
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
 // Set EJS as the view engine
 app.set("view engine", "ejs");
 app.set("views", `${__dirname}/views`);
@@ -23,7 +41,7 @@ app.use(
 
 
 // Use a persistent SQLite database instead of in-memory
-const db = new sqlite3.Database("crypto-miner.db", (err) => {
+const db = new sqlite3.Database(PATH_TO_SQLITE_DB, (err) => {
   if (err) {
     console.error("Error opening database:", err.message);
   } else {
