@@ -11,10 +11,27 @@
       margin: 20px;
     }
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
     h1 {
       color: #333;
     }
 
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
     table {
       border-collapse: collapse;
       width: 100%;
@@ -26,11 +43,32 @@
       padding: 8px;
       text-align: left;
     }
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
 
     th {
       background-color: #f2f2f2;
     }
+    th {
+      background-color: #f2f2f2;
+    }
 
+    button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
     button {
       background-color: #4caf50;
       color: white;
@@ -88,6 +126,9 @@
             <%= user.allow_withdraw ? 'Yes' : 'No' %>
           </td>
           <td>
+            <%= user.allow_withdraw ? 'Yes' : 'No' %>
+          </td>
+          <td class="actions">
             <% if (!user.approved) { %>
               <form action="/admin/approve/<%= user.id %>" method="post">
                 <button type="submit">Approve</button>
@@ -107,6 +148,10 @@
           </td>
         </tr>
         <% }); %>
+    </tbody>
+  </table>
+</body>
+
     </tbody>
   </table>
 </body>

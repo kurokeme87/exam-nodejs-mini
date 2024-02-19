@@ -54,6 +54,8 @@ const db = new sqlite3.Database(PATH_TO_SQLITE_DB, (err) => {
 });
 
 
+
+
 app.get("/", (req, res) => {
   // Fetch the list of users from the database
   db.all("SELECT * FROM users", (err, users) => {
