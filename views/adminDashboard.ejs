@@ -89,6 +89,11 @@
     .revoke-btn:hover {
       background-color: maroon;
     }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
   </style>
 </head>
 
@@ -127,7 +132,6 @@
               <form action="/admin/approve/<%= user.id %>" method="post">
                 <button type="submit">Approve</button>
               </form>
-              |
               <% } %>
 
                 <% if (!user.allow_withdraw) { %>
