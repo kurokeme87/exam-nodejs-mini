@@ -6,7 +6,7 @@
   "scripts": {
     "test": "ks",
     "dev": "set PROD=false && node server.js",
-    "start": "set PROD=true && node server.js"
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
