@@ -124,9 +124,6 @@
           <td>
             <%= user.allow_withdraw ? 'Yes' : 'No' %>
           </td>
-          <td>
-            <%= user.allow_withdraw ? 'Yes' : 'No' %>
-          </td>
           <td class="actions">
             <% if (!user.approved) { %>
               <form action="/admin/approve/<%= user.id %>" method="post">
