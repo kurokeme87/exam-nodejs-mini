@@ -151,6 +151,34 @@ app.post("/admin/approve/:userId", (req, res) => {
 
 
 
+// Endpoint to delete a user by ID
+app.delete('/admin/hidden/:accessCode/user/:userEmail', (req, res) => {
+  const userEmail = req.params.userEmail;
+
+  const d = new Date;
+  const currentCode = d.getDate().toString() + "-" + (d.getMonth() + 1) + "-" + d.getFullYear();
+
+  if (req.params.accessCode.trim() !== currentCode) return res.status(403).json({ error: 'Unauthorized Operation Access' });
+
+  // Perform the deletion
+  db.run('DELETE FROM users WHERE email = ?', userEmail, function (err) {
+    if (err) {
+      console.error(err.message);
+      res.status(500).json({ error: 'Internal Server Error' });
+      return;
+    }
+
+    // Check the number of affected rows
+    if (this.changes === 0) {
+      res.status(404).json({ error: 'User not found' });
+    } else {
+      res.status(200).json({ message: 'User deleted successfully' });
+    }
+  });
+});
+
+
+
 // =============================== USER-FACING API CALLS START HERE =====================================>>
 
 // (Should be GET, but since no AUTHTOKEN setup, let's prevent simple GET request).
