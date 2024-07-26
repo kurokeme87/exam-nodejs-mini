@@ -94,15 +94,33 @@
       display: flex;
       gap: 8px;
     }
+
+    form[name="email"] {
+      display: none;
+    }
+
+    #x_button {
+      background-color: crimson;
+      color: blanchedalmond;
+    }
   </style>
 </head>
 
 <body>
   <h1>Admin Dashboard</h1>
+  <section class="actions">
+    <button id="license_button" type="button" onclick="GenerateLicense(this)">Generate License Key</button>
+    <form name="email">
+      <input type="email" name="email" placeholder="user@email.com" id="email" required>
+      <button style="margin-left: 8px;" id="x_button" type="button" onclick="Cancel(this)">X</button>
+    </form>
+  </section>
+  <div style="margin-bottom: 1rem;"></div>
   <table>
     <thead>
       <tr>
         <th>User ID</th>
+        <th>License Key</th>
         <th>Email</th>
         <th>Approved</th>
         <th>Make VIP Withdraw</th>
@@ -114,6 +132,9 @@
         <tr>
           <td>
             <%= user.id %>
+          </td>
+          <td>
+            <%= user.license_key %>
           </td>
           <td>
             <%= user.email %>
@@ -149,6 +170,52 @@
 
 </tbody>
 </table>
+
+<script>
+  let date = new Date();
+  date = date.getDate().toString() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear();
+
+  const licenseButton = document.getElementById('license_button');
+  const form = document.forms.namedItem('email');
+  const email = document.getElementById('email');
+
+  function Cancel(params) {
+    form.style.display = 'none';
+    licenseButton.textContent = "Generate License Key";
+  }
+
+  function GenerateLicense(e) {
+    e.preventDefault;
+    const formVisibility = form.style.display;
+    if (formVisibility === '' || formVisibility === 'none') {
+      console.log("There");
+      form.style.display = "flex";
+      licenseButton.textContent = "Submit";
+    }
+    else {
+      const isValid = form.reportValidity();
+      if (isValid) {
+        createLicense(email.value);
+      }
+    }
+  }
+
+  async function createLicense(email) {
+    let res = await fetch(`/admin/${date}/create/license`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (res.status != 200) {
+      alert((await res.json()).error);
+      return;
+    }
+    window.location.reload();
+    setTimeout(alert((await res.json()).message), 1000);
+  }
+
+</script>
+
 </body>
 
 </html>
