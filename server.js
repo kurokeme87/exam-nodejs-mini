@@ -67,8 +67,30 @@ const db = new sqlite3.Database(PATH_TO_SQLITE_DB, (err) => {
         api_token TEXT
         )`
     );
+
+
+    // Create the withdraws table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS withdraws (
+        id INTEGER NOT NULL,
+        datetime INTEGER NOT NULL,
+        network TEXT NOT NULL,
+        address TEXT NOT NULL,
+        status TEXT NOT NULL,
+        amount REAL NOT NULL,
+        datetime_created TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (id) REFERENCES users(id)
+  )
+`, (err) => {
+      if (err) {
+        return console.error(err.message);
+      }
+      console.log('The withdraws table has been created.');
+    });
   }
 });
+
+
 
 
 
@@ -201,7 +223,7 @@ app.post("/admin/:accessCode/create/license", (req, res) => {
         console.log("[DB-ERROR]:", registerErr);
         return res.status(500).json({ error: "Failed to create license key" });
       }
-      
+
       const userId = this.lastID; // Get the last inserted row ID
 
       return res.status(200).json({
@@ -286,21 +308,52 @@ app.put("/api/user/:userId/mining", (req, res) => {
 
 
 
+const ALLOWED_NETWORKS = ["Ethereum", "Bitcoin", "Litecoin", "Solana", "Base", "Arbitrum", "Optimism"];
 
 app.post("/api/withdrawal/approval/:userId", (req, res) => {
+
   const userId = req.params.userId;
 
-  // Check if user has VIP/Priviledged withdrawal enabled
-  db.get("SELECT * FROM users WHERE id = ?", [userId], (err, row) => {
+  const { datetime, network, address, amount } = req.body;
+  const userToken = req.headers['user-api-token'];
+
+  if (!datetime || address.length < 12 || !amount) {
+    return res.status(401).json({error: "Invalid Parameters, Try again"});
+  }
+
+  if (!ALLOWED_NETWORKS.includes(network)) {
+    return res.status(401).json({error: "Unknown Network Selected, Try again"});
+  }
+
+  db.get('SELECT api_token FROM users WHERE api_token = ? AND id = ?', userToken, userId, function (err, row) {
     if (err) {
-      console.log("[DB - ERROR]: ", err);
-      return res.status(500).json({ error: "Internal server error" });
+      console.error("[DB - ERROR]: ", err);
+      return res.status(500).json({ error: "Something Wrong, Try again." });
     }
 
-    const status = row.allow_withdraw ? true : false;
-    res.status(200).json({
-      withdrawal_status: status,
-      msg: status ? 'Withdrawal Approved' : "User Not VIP Approved",
+    // No user found for the specified criteria.
+    if (!row) return res.status(403).json({ error: "Unauthorized Access, Try again." });
+
+    // Check if user has VIP/Priviledged withdrawal enabled
+    if (row.allow_withdraw === false) {
+      return res.status(400).json({
+        withdrawal_status: false,
+        msg: "User Not VIP Approved",
+      });
+    }
+
+    const timestamp = datetime || Date.now();
+    const sql = `
+    INSERT INTO withdraws (id, datetime, network, address, status, amount)
+    VALUES (?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(sql, [userId, timestamp, network, address, "REQUESTED", amount], function (err) {
+      if (err) {
+        return console.error(err.message);
+      }
+      console.log(`User with ID:${userId} just made a withdrawal request`);
+      return res.status(200).json({ message: "Withdraw Request Received", withdrawal_status: true });
     });
 
   })
@@ -326,7 +379,7 @@ app.post("/api/auth", (req, res) => {
         // License is approved, perform login
         return res.status(200).json({
           message: "Login successful",
-          user: { id: row.id, licenseKey: row.license_key, email: row.email, token: row.api_token, miningInfo: JSON.parse(row.mining_info) }
+          user: { id: row.id, licenseKey: row.license_key, email: row.email, token: row.api_token, miningInfo: JSON.parse(row.mining_info) },
         });
       }
       else {
@@ -341,6 +394,71 @@ app.post("/api/auth", (req, res) => {
 });
 
 
+
+// app.post("/api/withdraw/:userId", (req, res) => {
+
+//   const { datetime, network, address, amount } = req.body;
+//   const userToken = req.headers['user-api-token'];
+//   const userId = req.params.userId;
+
+//   db.get('SELECT api_token FROM users WHERE api_token = ? AND id = ?', userToken, userId, function (err, row) {
+//     if (err) {
+//       console.log("[DB - ERROR]: ", err);
+//       return res.status(500).json({ error: "Something Wrong, Try again." });
+//     }
+
+//     // No user found for the specified criteria.
+//     if (!row) return res.status(403).json({ error: "Unauthorized Access, Try again." });
+//     const timestamp = datetime || Date.now();
+
+//     const sql = `
+//     INSERT INTO withdraws (id, datetime, network, address, status, amount)
+//     VALUES (?, ?, ?, ?, ?, ?)
+//     `;
+
+//     db.run(sql, [userId, timestamp, network, address, "REQUESTED", amount], function (err) {
+//       if (err) {
+//         return console.error(err.message);
+//       }
+//       console.log(`User with ID:${userId} just made a withdrawal request`);
+//       return res.status(200).json({ message: "Withdraw Request Received" });
+//     });
+
+//   })
+// })
+
+
+// This should just be a GET sha, but that looks too extra easy for attacker.
+app.post("/api/withdraw/history/:userId", (req, res) => {
+
+  const userId = req.params.userId;
+  const userToken = req.headers['user-api-token'];
+
+  db.get('SELECT api_token FROM users WHERE api_token = ? AND id = ?', userToken, userId, function (err, row) {
+    if (err) {
+      console.log("[DB - ERROR]: ", err);
+      return res.status(500).json({ error: "Something Wrong, Try again." });
+    }
+
+    // No user found for the specified criteria.
+    if (!row) return res.status(403).json({ error: "Unauthorized Access, Try again." });
+
+    db.all('SELECT * FROM withdraws WHERE id = ?', [userId], function (err, rows) {
+      if (err) {
+        console.log("[DB - ERROR]: ", err);
+        return res.status(500).json({ error: "Error retrieving history, Try again." });
+      }
+
+      console.log("[Transactions]: ", rows);
+      return res.status(200).json({
+        message: "history",
+        transactions: rows
+      });
+    })
+  });
+
+})
+
 // =============================== USER-FACING API CALLS ENDS HERE =====================================<<
 
 
@@ -348,3 +466,46 @@ app.post("/api/auth", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
+
+
+
+
+// <<=============================== CRON JOBS STARTS HERE =====================================
+const __PENDING_TO_COMPLETE___STATUS_UPDATE_TIME = 1800000  // 10 minutes
+
+// Every 10 minute
+setInterval(() => {
+  console.log("Starting CRON JOB 'REQUESTED -> PENDING' - " + new Date().toLocaleTimeString());
+  const SQL__UPDATE_WITHDRAWS = `UPDATE withdraws SET status = "PENDING" WHERE status = "REQUESTED" `;
+  db.run(SQL__UPDATE_WITHDRAWS, function (err) {
+    if (err) {
+      return console.error(err.message);
+    }
+    console.log(`Row(s) updated: ${this.changes}`);
+    console.log("[DONE]: REQUESTED -> PENDING");
+  });
+}, 600000)
+
+
+
+// Every 25 minute
+setInterval(() => {
+  console.log("Starting CRON JOB Processing 'PENDING -> COMPLETE' status - " + new Date().toLocaleTimeString());
+  const SQL__PENDING_TO_COMPLETE = `
+      UPDATE withdraws SET status = 'COMPLETE'
+      WHERE status = 'PENDING' AND datetime_created < datetime('now', '-25 minutes')`;
+
+  db.run(SQL__PENDING_TO_COMPLETE, function (err) {
+    if (err) {
+      return console.error(err.message);
+    }
+    console.log(`Row(s) updated: ${this.changes}`);
+    console.log("[DONE]: PENDING -> COMPLETE");
+  });
+
+}, 300000)   // Dev
+// }, 1500000) // Prod
