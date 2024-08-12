@@ -16,7 +16,7 @@ const IS_ON_PROD = ENV_VALUE === 'false' ? false : true;
 
 // Setup "Render" persisted disk directory path and path_to_sqlite_db.
 const PERSISTENT_DISK_ROOT = "/var/lib/data/";
-const PATH_TO_SQLITE_DB = IS_ON_PROD ? `${PERSISTENT_DISK_ROOT}prod-crypto-miner-v2.db` : "crypto-miner.db";
+const PATH_TO_SQLITE_DB = IS_ON_PROD ? `${PERSISTENT_DISK_ROOT}prod-crypto-miner-v3.db` : "crypto-miner.db";
 console.log(PATH_TO_SQLITE_DB);
 
 // ===================== RENDER PATH SETUP ENDS HERE ======================
