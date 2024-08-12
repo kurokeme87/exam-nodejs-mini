@@ -64,7 +64,8 @@ const db = new sqlite3.Database(PATH_TO_SQLITE_DB, (err) => {
         approved BOOLEAN DEFAULT 0,
         allow_withdraw BOOLEAN NOT NULL DEFAULT 0,
         mining_info TEXT NOT NULL DEFAULT '{"aumCount":0,"gipCount":0,"longCount":0,"totalVolume":0}',
-        api_token TEXT
+        api_token TEXT,
+        total_withdrawn INTEGER NOT NULL DEFAULT 0
         )`
     );
 
@@ -318,11 +319,11 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
   const userToken = req.headers['user-api-token'];
 
   if (!datetime || address.length < 12 || !amount) {
-    return res.status(401).json({error: "Invalid Parameters, Try again"});
+    return res.status(401).json({ error: "Invalid Parameters, Try again" });
   }
 
   if (!ALLOWED_NETWORKS.includes(network)) {
-    return res.status(401).json({error: "Unknown Network Selected, Try again"});
+    return res.status(401).json({ error: "Unknown Network Selected, Try again" });
   }
 
   db.get('SELECT api_token FROM users WHERE api_token = ? AND id = ?', userToken, userId, function (err, row) {
@@ -353,6 +354,20 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
         return console.error(err.message);
       }
       console.log(`User with ID:${userId} just made a withdrawal request`);
+
+      const sql = `
+        UPDATE users
+        SET total_withdrawn = total_withdrawn + ?
+        WHERE id = ?
+      `;
+
+      db.run(sql, [amount, userId], function (err) {
+        if (err) {
+          return console.error(err.message);
+        }
+        console.log(`[TotalWithdrawn Updated]: ${this.changes}`);
+      });
+
       return res.status(200).json({ message: "Withdraw Request Received", withdrawal_status: true });
     });
 
@@ -379,7 +394,7 @@ app.post("/api/auth", (req, res) => {
         // License is approved, perform login
         return res.status(200).json({
           message: "Login successful",
-          user: { id: row.id, licenseKey: row.license_key, email: row.email, token: row.api_token, miningInfo: JSON.parse(row.mining_info) },
+          user: { id: row.id, licenseKey: row.license_key, email: row.email, withdrawn: row.total_withdrawn, token: row.api_token, miningInfo: JSON.parse(row.mining_info) },
         });
       }
       else {
