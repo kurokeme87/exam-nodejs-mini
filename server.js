@@ -119,10 +119,8 @@ app.post("/admin/revoke/withdrawal/:userId", (req, res) => {
     (err) => {
       if (err) {
         console.log("[DB - ERROR]: ", err);
-
         return res.status(500).json({ error: "Internal server error" });
       }
-
       // Redirect back to the admin dashboard
       res.redirect("/");
     }
@@ -151,7 +149,7 @@ app.post("/admin/approve/withdrawal/:userId", (req, res) => {
   );
 });
 
-
+// Grant Login Privileges to User.
 app.post("/admin/approve/:userId", (req, res) => {
   const userId = req.params.userId;
 
@@ -162,10 +160,28 @@ app.post("/admin/approve/:userId", (req, res) => {
     (err) => {
       if (err) {
         console.log("[DB - ERROR]: ", err);
-
         return res.status(500).json({ error: "Internal server error" });
       }
+      // Redirect back to the admin dashboard
+      res.redirect("/");
+    }
+  );
+});
 
+
+// Revoke User Login Privileges.
+app.post("/admin/revoke/:userId", (req, res) => {
+  const userId = req.params.userId;
+
+  // Update the user's 'approved' status in the database
+  db.run(
+    "UPDATE users SET approved = 0 WHERE id = ?",
+    [userId],
+    (err) => {
+      if (err) {
+        console.log("[DB - ERROR]: ", err);
+        return res.status(500).json({ error: "Internal server error" });
+      }
       // Redirect back to the admin dashboard
       res.redirect("/");
     }
@@ -335,11 +351,12 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
     // No user found for the specified criteria.
     if (!row) return res.status(403).json({ error: "Unauthorized Access, Try again." });
 
+    // console.log(row);
     // Check if user has VIP/Priviledged withdrawal enabled
-    if (row.allow_withdraw === false) {
+    if (parseInt(row.allow_withdraw) !== 1) {
       return res.status(400).json({
         withdrawal_status: false,
-        msg: "User Not VIP Approved",
+        error: "You're Not VIP Approved 😉",
       });
     }
 

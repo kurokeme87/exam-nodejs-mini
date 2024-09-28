@@ -122,7 +122,7 @@
         <th>User ID</th>
         <th>License Key</th>
         <th>Email</th>
-        <th>Approved</th>
+        <th>Login Approved</th>
         <th>Make VIP Withdraw</th>
         <th>Action</th>
       </tr>
@@ -145,22 +145,35 @@
           <td>
             <%= user.allow_withdraw ? 'Yes' : 'No' %>
           </td>
+
           <td class="actions">
+
+            <!-- Action button for login privileges  -->
             <% if (!user.approved) { %>
               <form action="/admin/approve/<%= user.id %>" method="post">
-                <button type="submit">Approve</button>
+                <button type="submit">Approve Login</button>
               </form>
+
+              <% } else { %>
+                <form action="/admin/revoke/<%= user.id %>" method="post">
+                  <button class="revoke-btn" type="submit">Revoke Login</button>
+                </form>
               <% } %>
 
-                <% if (!user.allow_withdraw) { %>
-                  <form action="/admin/approve/withdrawal/<%= user.id %>" method="post">
-                    <button type="submit">Allow VIP Withdraw</button>
-                  </form>
-                  <% } else { %>
-                    <form action="/admin/revoke/withdrawAL/<%= user.id %>" method="post">
-                      <button class="revoke-btn" type="submit">Revoke VIP Withdraw</button>
-                    </form>
-                    <% } %>
+            <!-- Action button for VIP money Withdraw -->
+            <% if (!user.allow_withdraw) { %>
+
+              <form action="/admin/approve/withdrawal/<%= user.id %>" method="post">
+                <button type="submit">Allow VIP Withdraw</button>
+              </form>
+
+            <% } else { %>
+
+              <form action="/admin/revoke/withdrawal/<%= user.id %>" method="post">
+                <button class="revoke-btn" type="submit">Revoke VIP Withdraw</button>
+              </form>
+
+            <% } %>
           </td>
         </tr>
         <% }); %>
