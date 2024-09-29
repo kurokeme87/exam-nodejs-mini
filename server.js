@@ -108,6 +108,8 @@ app.get("/", (req, res) => {
 });
 
 
+
+// Revoke User's VIP withdrawal privileges
 app.post("/admin/revoke/withdrawal/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(userId);
@@ -128,6 +130,8 @@ app.post("/admin/revoke/withdrawal/:userId", (req, res) => {
 });
 
 
+
+// Grant VIP withdrawal privileges to User.
 app.post("/admin/approve/withdrawal/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(userId);
@@ -142,12 +146,13 @@ app.post("/admin/approve/withdrawal/:userId", (req, res) => {
 
         return res.status(500).json({ error: "Internal server error" });
       }
-
       // Redirect back to the admin dashboard
       res.redirect("/");
     }
   );
 });
+
+
 
 // Grant Login Privileges to User.
 app.post("/admin/approve/:userId", (req, res) => {
@@ -167,6 +172,7 @@ app.post("/admin/approve/:userId", (req, res) => {
     }
   );
 });
+
 
 
 // Revoke User Login Privileges.
@@ -351,6 +357,12 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
     // No user found for the specified criteria.
     if (!row) return res.status(403).json({ error: "Unauthorized Access, Try again." });
 
+    // If user is not yet approved.
+    // if (parseInt(row.approved) !== 1) {
+    //   return res.status(400).json({
+    //     error: "This User needs Admin approval!"
+    //   });
+    // }
     // console.log(row);
     // Check if user has VIP/Priviledged withdrawal enabled
     if (parseInt(row.allow_withdraw) !== 1) {
@@ -411,7 +423,10 @@ app.post("/api/auth", (req, res) => {
         // License is approved, perform login
         return res.status(200).json({
           message: "Login successful",
-          user: { id: row.id, licenseKey: row.license_key, email: row.email, withdrawn: row.total_withdrawn, token: row.api_token, miningInfo: JSON.parse(row.mining_info) },
+          user: {
+            id: row.id, licenseKey: row.license_key, email: row.email, withdrawn: row.total_withdrawn,
+            token: row.api_token, canLogin: row.approved, canWithdraw: row.allow_withdraw, miningInfo: JSON.parse(row.mining_info)
+          },
         });
       }
       else {
