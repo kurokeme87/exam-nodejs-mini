@@ -348,7 +348,7 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
     return res.status(401).json({ error: "Unknown Network Selected, Try again" });
   }
 
-  db.get('SELECT api_token FROM users WHERE api_token = ? AND id = ?', userToken, userId, function (err, row) {
+  db.get('SELECT api_token, allow_withdraw FROM users WHERE api_token = ? AND id = ?', userToken, userId, function (err, row) {
     if (err) {
       console.error("[DB - ERROR]: ", err);
       return res.status(500).json({ error: "Something Wrong, Try again." });
@@ -369,7 +369,7 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
       return res.status(400).json({
         withdrawal_status: false,
         error: "You're Not VIP Approved 😉",
-        row
+        // row
       });
     }
 
