@@ -369,6 +369,7 @@ app.post("/api/withdrawal/approval/:userId", (req, res) => {
       return res.status(400).json({
         withdrawal_status: false,
         error: "You're Not VIP Approved 😉",
+        row
       });
     }
 
